@@ -39,13 +39,13 @@ resource "google_container_cluster" "primary" {
     # you can substitue this with variables and data objects
     # you need to replace with your project id
     workload_identity_config {
-        workload_pool = #
+        workload_pool = "terraform-422613.svc.id.goog"
     }
 
     # provide the names of the secondary ranges for the pods and then for cluster ips
     ip_allocation_policy {
-        cluster_secondary_range_name = 
-        services_secondary_range_name = 
+        cluster_secondary_range_name = "kubernetes-pod-range"
+        services_secondary_range_name = "kubernetes-service-range"
     }
 
     # make this cluster private
@@ -53,7 +53,7 @@ resource "google_container_cluster" "primary" {
         enable_private_endpoint = false # if you have a VPN setup or use bastion host to connect to the kubernetes cluster = true
         # otherwise keep it false to be able access to GKE from your computers
         enable_private_nodes = true # use only private IPs from our private subnet for k8s nodes
-        master_ipv4_cidr_block = "192.168.0.0/16" #cidr range for the control plane
+        master_ipv4_cidr_block = "192.168.0.0/26" #cidr range for the control plane
         # they will create a control plane in their network and establish peering connect to youur VPC
     }
 

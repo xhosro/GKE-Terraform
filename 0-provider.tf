@@ -18,11 +18,11 @@ terraform {
 }
 
 # in new project we must enable APIs
-resource "google_project_service" { 
+resource "google_project_service" "compute" { 
     service = "compute.googleapis.com"
 }
 
-resource "google_project_service" { 
+resource "google_project_service" "container"{ 
     service = "container.googleapis.com"
 }
 
