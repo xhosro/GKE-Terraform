@@ -20,7 +20,7 @@ resource "google_compute_subnetwork" "main" {
   name                     = "main"
   network                  = google_compute_network.main.id
   ip_cidr_range            = "10.0.0.0/18" # 16000 IPs to play with
-  region                   = "eu-west1"
+  region                   = "europe-west1"
   private_ip_google_access = true # VMs in this subnetwork without external IP addresses can access google APIs & services forexample maneged redis or postgres
 
   # kubernetes nodes use IPs from main cidr range & kubernetes pods use IPs from the secondary cidr range
@@ -43,40 +43,39 @@ resource "google_compute_subnetwork" "main" {
 # it will be used with the NAT gateway to allow VMs without public IP addresses to access internet, kubernetes nodes to pull docker images from dockerhub
 resource "google_compute_router" "router" {
   name    = "router"
-  region  = "eu-west1"
+  region  = google_compute_subnetwork.main.region
   network = google_compute_network.main.id
 }
 
-
-#NAT
-resource "google_compute_router_nat" "nat" {
-  name   = "nat"
-  region = "eu-west1"
-  router = google_compute_router.router.id
-
-  nat_ip_allocate_option             = "MANUAL_ONLY"         # if you have external clients
-  source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS" # advertise NAT to all subnets or specific one, here the private subnet only
-
-  subnetwork {
-    name                    = "google_computer_subnetwork.main.id"
-    source_ip_ranges_to_nat = ["All_IP_RANGES"]
-  }
-
-  nat_ips = [google_compute_address.nat.self_link]
-}
-
-
-resource "google_compute_address" "nat" {
-  name         = "nat"
-  region       = "eu-west1"
+resource "google_compute_address" "address" {
+  count = 2
+  name         = "nat-manual-ip-${count.index}"
+  region       = "europe-west1"
   address_type = "EXTERNAL"
   network_tier = "PREMIUM" # standard
 
   depends_on = [
   google_project_service.compute]
-
-  subnetwork = google_compute_subnetwork.main.id
 }
+
+#NAT
+resource "google_compute_router_nat" "nat" {
+  name   = "nat"
+  region = google_compute_router.router.region
+  router = google_compute_router.router.name
+
+  nat_ip_allocate_option             = "MANUAL_ONLY"         # if you have external clients
+  nat_ips = google_compute_address.address.*.self_link
+  source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS" # advertise NAT to all subnets or specific one, here the private subnet only
+
+  subnetwork {
+    name                    = google_compute_subnetwork.main.id
+    source_ip_ranges_to_nat = ["All_IP_RANGES"]
+  }
+
+  
+}
+
 
 
 #firewall

@@ -2,7 +2,7 @@
 
 resource "google_container_cluster" "primary" {
   name                     = "primary"
-  location                 = "eu-west1-a" #region or availability zone # choosing at least 2 avalibility zones for kubernetes nodes 
+  location                 = "europe-west1-c" #region or availability zone # choosing at least 2 avalibility zones for kubernetes nodes 
   initial_node_count       = 1
   remove_default_node_pool = true # we will create additional instances groups for kubernetes cluster.
   network                  = google_compute_network.main.self_link
@@ -13,7 +13,7 @@ resource "google_container_cluster" "primary" {
 
   # optional, if you want multi-zonal cluster 
   node_locations = [
-    "eu-west1-b"
+    "europe-west1-b"
   ]
 
   # There are many diffrent addons that you can disable or enable, for example you can deploy istio service mesh 
@@ -42,8 +42,8 @@ resource "google_container_cluster" "primary" {
 
   # provide the names of the secondary ranges for the pods and then for cluster ips
   ip_allocation_policy {
-    cluster_secondary_range_name  = "kubernetes-pod-range"
-    services_secondary_range_name = "kubernetes-service-range"
+    cluster_secondary_range_name  = "k8s-pod-range"
+    services_secondary_range_name = "k8s-service-range"
   }
 
   # make this cluster private

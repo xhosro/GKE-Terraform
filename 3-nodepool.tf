@@ -59,9 +59,9 @@ resource "google_container_node_pool" "spot" {
 
     # such nodes must have taints to avoid accidental scheduling, your deployment or pod object must tolerate those taints.
     taint {
-      key    = "spot"
-      effect = "NoSchedule"
-      value  = "true"
+      key    = "instance_type"
+      effect = "NO_SCHEDULE"
+      value  = "spot"
     }
 
     service_account = google_service_account.kubernetes.email

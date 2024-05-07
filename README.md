@@ -25,7 +25,12 @@ Before you begin, make sure you have the following:
    gcloud auth application-default login
 
 
-   it will open in browser 
+   it will open in browser for autorization
+
+then run terraform init and terraform fmt and terraform validate for debugging syntax and configuration errors
+
+then run terraform plan 
+terraform apply -auto--approve
 
 
 
