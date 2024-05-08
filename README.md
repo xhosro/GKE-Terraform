@@ -10,6 +10,7 @@ Before you begin, make sure you have the following:
 - A Google Cloud Platform (GCP) account with appropriate permissions.
 - Google Cloud SDK (`gcloud`) installed and configured on your machine.
 - Optional: A Google Cloud Storage (GCS) bucket for storing Terraform state.
+- kubectl (`kubectl`) installed and configured on your machine
 
 ## Getting Started
 
@@ -33,5 +34,22 @@ then run terraform plan
 terraform apply -auto--approve
 
 
+we can visit google console for verify vpc network and kubenrbetes engine
+in console in the node part we can find connect 
 
+gcloud container clusters get-credentials primary --zone europe-west1-c --project terraform-422613
 
+but firstly we need to install 
+
+gcloud components install gke-gcloud-auth-plugin  
+
+and then run 
+kubectl get svc
+show the kubernetes service from default namespace
+
+kubectl get nodes
+
+to demonstrate cluster autoscaling , use nginx image with 2 replicas
+the first deployment object
+we want to deploy it to the spot instance group 
+we need to tolarate those taints set on the nodes

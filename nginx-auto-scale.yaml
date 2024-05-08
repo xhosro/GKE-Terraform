@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-auto-scale
+  namespace: default
+  labels:
+    app: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25.5
+        ports:
+        - containerPort: 80
+        resources:
+        # We need to limit the CPU and Memory of the pods
+         requests: 
+           cpu: "100m"
+           memory: "100Mi"
+         limits:
+          cpu: 200m # of cores    
+          memory: 200Mi # of memory        
+        # We need to tolerate those taints set on the nodes
+      tolerations:
+        - key: instance_type
+          value: spot
+          effect: NoSchedule
+          operator: Equal
+      # We want to restrict deployment to only nodes with label team = devops
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: team
+                operator: In
+                values:
+                - devops
+        # Will force Kubernetes to spread pods between different nodes.
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - nginx
+            topologyKey: kubernetes.io/hostname
