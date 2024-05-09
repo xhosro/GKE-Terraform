@@ -52,4 +52,45 @@ kubectl get nodes
 to demonstrate cluster autoscaling , use nginx image with 2 replicas
 the first deployment object
 we want to deploy it to the spot instance group 
-we need to tolarate those taints set on the nodes
+
+kubectl apply -f nginx-auto-scale.yaml
+
+kubectl get pods
+
+kubectl describe pod nginx.....
+
+
+kubctl get nodes 
+two addithinnel nodes will be deployed, when they become ready two pods will be able to schedule
+
+
+so we have 4 nodes and 2  pods
+
+how to use workload identity and grant access to the podes to list gs buckets??
+
+first of all we create a service account resources 
+
+then terraform apply
+
+go to service account google console for verifying
+
+2: 
+
+create service account
+
+go to console and choose a service accounts & IAM
+
+kubectl apply -f kube.yaml
+
+command and args are used to override the default command and arguments that are run when the container starts. In this case, it's running a shell command that keeps the container running (while true; do sleep 30; done;). This is often used to keep the pod running so that you can interact with it, for example, via kubectl exec.
+
+kubectl get pods -n staging
+
+kubectl exec -n staginig -it gcloud-78756cf98-bjv5x -- bash
+
+gloud alpha storage ls
+
+we get error
+
+the caller doesnt have storage.bucket.list access; thats beacause when we omit the service acconu in the depoyment oonject , it will use the default service acconut in that namespace
+
