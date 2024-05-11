@@ -3,7 +3,14 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: staging
-
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    iam.gke.io/gcp-service-account: service-1@terraform-422613.iam.gserviceaccount.com
+  name: service-1
+  namespace: staging
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -20,6 +27,7 @@ spec:
       labels:
         app: gcloud
     spec:
+      serviceAccountName: service-1
       containers:
       - name: cloud-sdk
         image: google/cloud-sdk:latest
@@ -27,3 +35,13 @@ spec:
         args: ["while true; do sleep 30; done;"]
         # define a command & arguments to prevent exiting right after the pod is started,
         # this giving us time to ssh to the pod and run gcloud
+        # use affinity to place this pod to the node with workload identity enabled
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: iam.gke.io/gke-metadata-server-enabled
+                operator: In
+                values:
+                - "true"

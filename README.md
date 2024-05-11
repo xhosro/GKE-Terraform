@@ -94,3 +94,126 @@ we get error
 
 the caller doesnt have storage.bucket.list access; thats beacause when we omit the service acconu in the depoyment oonject , it will use the default service acconut in that namespace
 
+
+
+it should impersonate the gcp service account and get access to the buckets
+
+% kubectl get sa -n staging
+NAME        SECRETS   AGE
+default     0         75m
+service-1   0         52s
+
+% kubectl get pods -n staging
+NAME                      READY   STATUS    RESTARTS   AGE
+gcloud-759d54f847-f57dp   1/1     Running   0          72s
+
+% kubectl exec -n staging -it gcloud-759d54f847-f57dp  -- bash
+
+
+root@gcloud-759d54f847-f57dp:/# gcloud alpha storage ls
+gs://bucket-backend-terraform-gcp/
+root@gcloud-759d54f847-f57dp:/# 
+
+we have just one bucket for backend terraform
+
+
+
+3 : let's deploy the nginx ingress controller using the helm 
+
+helm repo add ingress-nginx  \
+> https://kubernetes.github.io/ingress-nginx
+
+
+# update the helm index
+helm repo update
+
+search for ingress-nginx
+
+helm search repo nginx
+
+NAME                                            CHART VERSION   APP VERSION                                         
+ingress-nginx/ingress-nginx                     4.10.1          1.10.1      
+
+to override some default variables 
+create the nginx-values
+all options on the nginx website
+
+helm install my-ing ingress-nginx/ingress-nginx \
+--namespace ingress \
+--version 4.10.1 \
+-f nginx-values.yaml \
+--create-namespace
+
+
+NAME: my-ing
+LAST DEPLOYED: Sat May 11 02:21:32 2024
+NAMESPACE: ingress
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The ingress-nginx controller has been installed.
+It may take a few minutes for the load balancer IP to be available.
+You can watch the status by running 'kubectl get service --namespace ingress my-ing-ingress-nginx-controller --output wide --watch'
+
+An example Ingress that makes use of the controller:
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: example
+    namespace: foo
+  spec:
+    ingressClassName: external-nginx
+    rules:
+      - host: www.example.com
+        http:
+          paths:
+            - pathType: Prefix
+              backend:
+                service:
+                  name: exampleService
+                  port:
+                    number: 80
+              path: /
+    # This section is only required if TLS is to be enabled for the Ingress
+    tls:
+      - hosts:
+        - www.example.com
+        secretName: example-tls
+
+If TLS is enabled for the Ingress, a Secret containing the certificate and key must also be provided:
+
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: example-tls
+    namespace: foo
+  data:
+    tls.crt: <base64 encoded cert>
+    tls.key: <base64 encoded key>
+  type: kubernetes.io/tls
+
+
+  kubectl get pods -n ingress
+
+  kubectl get svc -n ingress
+NAME                                        TYPE           CLUSTER-IP    EXTERNAL-IP    PORT(S)                      AGE
+my-ing-ingress-nginx-controller             LoadBalancer   10.22.5.53    34.78.22.124   80:32502/TCP,443:31998/TCP   4m31s
+my-ing-ingress-nginx-controller-admission   ClusterIP      10.22.4.252   <none>         443/TCP                      4m31s
+my-ing-ingress-nginx-controller-metrics     ClusterIP      10.22.8.156   <none>         10254/TCP                    4m31s
+
+create third yaml file
+kube3.yaml
+
+kubectl apply -f kube3.yaml
+
+verify if you set up ingress correctly
+
+kubectl get ingressclass
+
+kubectl get ing
+
+kubectl get svc -n ingress
+
+the final step to this ingress work , is to create DNS A record in your dns provider
+
