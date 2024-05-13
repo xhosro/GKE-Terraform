@@ -26,123 +26,127 @@ Before you begin, make sure you have the following:
    gcloud auth application-default login
 
 
-   it will open in browser for autorization
+3. run terraform init and terraform fmt and terraform validate for debugging syntax and configuration errors
+- then run terraform plan 
 
-then run terraform init and terraform fmt and terraform validate for debugging syntax and configuration errors
-
-then run terraform plan 
-terraform apply -auto--approve
-
-
-we can visit google console for verify vpc network and kubenrbetes engine
-in console in the node part we can find connect 
-
-gcloud container clusters get-credentials primary --zone europe-west1-c --project terraform-422613
-
-but firstly we need to install 
-
-gcloud components install gke-gcloud-auth-plugin  
-
-and then run 
-kubectl get svc
-show the kubernetes service from default namespace
-
-kubectl get nodes
-
-to demonstrate cluster autoscaling , use nginx image with 2 replicas
-the first deployment object
-we want to deploy it to the spot instance group 
-
-kubectl apply -f nginx-auto-scale.yaml
-
-kubectl get pods
-
-kubectl describe pod nginx.....
+   ```bash
+   terraform apply 
 
 
-kubctl get nodes 
-two addithinnel nodes will be deployed, when they become ready two pods will be able to schedule
+4. we can visit google console for verify vpc network and Kubernetes engine
+- in console in the node part we can find connect 
 
+    ```bash
+   gcloud container clusters get-credentials primary --zone europe-west1-c --project terraform-422613
 
-so we have 4 nodes and 2  pods
+- before we need to install:
 
-how to use workload identity and grant access to the podes to list gs buckets??
+   ```bash
+   gcloud components install gke-gcloud-auth-plugin  
 
-first of all we create a service account resources 
+5. show the kubernetes service and nodes from default namespace
 
-then terraform apply
+    ```bash
+    kubectl get svc
+    kubectl get nodes
 
-go to service account google console for verifying
+6. to demonstrate cluster autoscaling , use nginx image with 2 replicas
+- the first deployment object we want to deploy it to the spot instance group 
 
-2: 
+     ```bash 
+     kubectl apply -f nginx-auto-scale.yaml
+     kubectl get pods
+     kubectl describe pod nginx-...
+     kubectl get nodes 
 
-create service account
-
-go to console and choose a service accounts & IAM
-
-kubectl apply -f kube.yaml
-
-command and args are used to override the default command and arguments that are run when the container starts. In this case, it's running a shell command that keeps the container running (while true; do sleep 30; done;). This is often used to keep the pod running so that you can interact with it, for example, via kubectl exec.
-
-kubectl get pods -n staging
-
-kubectl exec -n staginig -it gcloud-78756cf98-bjv5x -- bash
-
-gloud alpha storage ls
-
-we get error
-
-the caller doesnt have storage.bucket.list access; thats beacause when we omit the service acconu in the depoyment oonject , it will use the default service acconut in that namespace
+- two additional nodes will be deployed, when they become ready two pods will be able to schedule
+- so we have 4 nodes and 2 pods
 
 
 
-it should impersonate the gcp service account and get access to the buckets
+7. how to use workload identity and grant access to the pods to list gs buckets??
+- first of all we create a service account resources 
+- then run
+    ```bash
+    terraform apply
 
-% kubectl get sa -n staging
-NAME        SECRETS   AGE
-default     0         75m
-service-1   0         52s
+- go to service account google console for verifying
+- then run
+    ```bash 
+    kubectl apply -f kube.yaml
 
-% kubectl get pods -n staging
-NAME                      READY   STATUS    RESTARTS   AGE
-gcloud-759d54f847-f57dp   1/1     Running   0          72s
+- command and args are used to override the default command and arguments that are run when the container starts. In this case, it's running a shell command that keeps the container running (while true; do sleep 30; done;). This is often used to keep the pod running so that you can interact with it, for example, via kubectl exec.
+   ```bash 
+   kubectl get pods -n staging
 
-% kubectl exec -n staging -it gcloud-759d54f847-f57dp  -- bash
+   kubectl exec -n staginig -it gcloud-78756cf98-bjv5x -- bash
 
+   gcloud alpha storage ls
 
-root@gcloud-759d54f847-f57dp:/# gcloud alpha storage ls
-gs://bucket-backend-terraform-gcp/
-root@gcloud-759d54f847-f57dp:/# 
+- we get error
 
-we have just one bucket for backend terraform
-
-
-
-3 : let's deploy the nginx ingress controller using the helm 
-
-helm repo add ingress-nginx  \
-> https://kubernetes.github.io/ingress-nginx
+- the caller doesnt have storage.bucket.list access; thats because when we omit the service account in the deployment object, 
+- it will use the default service acconut in that namespace
 
 
-# update the helm index
-helm repo update
 
-search for ingress-nginx
+- it should impersonate the gcp service account and get access to the buckets
 
-helm search repo nginx
+   ```bash 
+   kubectl get sa -n staging
+    
+- NAME        SECRETS   AGE
+- default     0         75m
+- service-1   0         52s
+
+   ```bash 
+   kubectl get pods -n staging
+- NAME                      READY   STATUS    RESTARTS   AGE
+    ```bash 
+   gcloud-759d54f847-f57dp   1/1     Running   0          72s
+
+   kubectl exec -n staging -it gcloud-759d54f847-f57dp  -- bash
+
+
+  root@gcloud-759d54f847-f57dp:/# gcloud alpha storage ls
+  gs://bucket-backend-terraform-gcp/
+
+
+- we have just one bucket for backend terraform
+
+
+
+8. Deploy the nginx ingress controller using the helm
+
+- first add ingress-nginx repository
+
+   ```bash 
+   helm repo add ingress-nginx  \
+   > https://kubernetes.github.io/ingress-nginx
+
+
+- update the helm index
+   
+   ```bash 
+   helm repo update
+
+- search for ingress-nginx  
+
+    ```bash  
+    helm search repo nginx
 
 NAME                                            CHART VERSION   APP VERSION                                         
 ingress-nginx/ingress-nginx                     4.10.1          1.10.1      
 
-to override some default variables 
-create the nginx-values
-all options on the nginx website
-
-helm install my-ing ingress-nginx/ingress-nginx \
---namespace ingress \
---version 4.10.1 \
--f nginx-values.yaml \
---create-namespace
+- to override some default variables 
+- create the nginx-values
+- all options on the nginx website
+   ```bash 
+   helm install my-ing ingress-nginx/ingress-nginx \
+   --namespace ingress \
+   --version 4.10.1 \
+   -f nginx-values.yaml \
+   --create-namespace
 
 
 NAME: my-ing

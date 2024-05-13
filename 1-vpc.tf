@@ -20,7 +20,7 @@ resource "google_compute_subnetwork" "main" {
   name                     = "main"
   network                  = google_compute_network.main.id
   ip_cidr_range            = "10.0.0.0/18" # 16000 IPs to play with
-  region                   = "europe-west1"
+  region                   = var.gcp_region
   private_ip_google_access = true # VMs in this subnetwork without external IP addresses can access google APIs & services forexample maneged redis or postgres
 
   # kubernetes nodes use IPs from main cidr range & kubernetes pods use IPs from the secondary cidr range

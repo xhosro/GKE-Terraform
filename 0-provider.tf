@@ -1,11 +1,12 @@
 provider "google" {
-  project = "terraform-422613"
-  region  = "eu-west1" # Belgium
+  project = var.gcp_projectproject
+  region  = var.gcp_region
+  #credentials = file(var.gcp_svc_key)
 }
 
 terraform {
   backend "gcs" {
-    bucket = "bucket-backend-terraform-gcp"
+    bucket = var.gcs_bucket
     prefix = "terraform/state"
   }
 
