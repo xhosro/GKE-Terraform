@@ -30,3 +30,6 @@ crash.log
 
 # Ignore workspace files
 *.tfstate.d/
+
+
+ingress.txt

@@ -63,12 +63,35 @@ Before you begin, make sure you have the following:
 - so we have 4 nodes and 2 pods
 
 
+# Enabling Workload Identity and Granting Access to GCS Buckets in Kubernetes
 
-7. how to use workload identity and grant access to the pods to list gs buckets??
-- first of all we create a service account resources 
-- then run
-    ```bash
-    terraform apply
+This guide provides instructions on how to enable Workload Identity in a Kubernetes cluster and grant access to pods to list Google Cloud Storage (GCS) buckets.
+
+## Prerequisites
+
+- Access to a Google Cloud Platform (GCP) project with appropriate permissions to create service accounts and assign roles.
+- `kubectl` CLI installed and configured to use the target Kubernetes cluster.
+- Terraform CLI installed.
+
+## Steps
+
+1. **Create a Service Account**:
+   - Create a Google Cloud service account with the necessary permissions to list GCS buckets. For example, grant the `roles/storage.objectViewer` role to the service account.
+
+2. **Configure Workload Identity**:
+   - Associate the Kubernetes service account used by your pods with the Google Cloud service account created in step 1. This enables Workload Identity, allowing pods to use the service account's permissions to access GCP services.
+
+3. **Apply Terraform Configuration**:
+   - Apply the Terraform configuration to create the necessary resources, including the Kubernetes service account.
+
+4. **Apply Kubernetes Configuration**:
+   - Apply the Kubernetes configuration to deploy your pods with the associated service account.
+
+## Usage
+
+1. Apply Terraform Configuration:
+   ```bash
+   terraform apply
 
 - go to service account google console for verifying
 - then run
@@ -95,15 +118,7 @@ Before you begin, make sure you have the following:
    ```bash 
    kubectl get sa -n staging
     
-- NAME        SECRETS   AGE
-- default     0         75m
-- service-1   0         52s
-
-   ```bash 
    kubectl get pods -n staging
-- NAME                      READY   STATUS    RESTARTS   AGE
-    ```bash 
-   gcloud-759d54f847-f57dp   1/1     Running   0          72s
 
    kubectl exec -n staging -it gcloud-759d54f847-f57dp  -- bash
 
@@ -116,108 +131,103 @@ Before you begin, make sure you have the following:
 
 
 
-8. Deploy the nginx ingress controller using the helm
-
-- first add ingress-nginx repository
-
-   ```bash 
-   helm repo add ingress-nginx  \
-   > https://kubernetes.github.io/ingress-nginx
 
 
-- update the helm index
-   
-   ```bash 
-   helm repo update
+# Setting Up Nginx Ingress Controller on Kubernetes
 
-- search for ingress-nginx  
+This guide walks through the process of deploying an Nginx Ingress Controller on a Kubernetes cluster using Helm. The Nginx Ingress Controller is used to manage external access to Kubernetes services via HTTP and HTTPS.
 
-    ```bash  
+## Prerequisites
+
+- Access to a Kubernetes cluster
+- `kubectl` CLI installed and configured to use the target cluster
+- Helm installed
+
+## Deploying Nginx Ingress Controller
+
+1. Add the Ingress-Nginx Helm repository:
+
+    ```bash
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    ```
+
+2. Update the Helm repository index:
+
+    ```bash
+    helm repo update
+    ```
+
+3. Search for the Ingress-Nginx Helm chart:
+
+    ```bash
     helm search repo nginx
+    ```
 
-NAME                                            CHART VERSION   APP VERSION                                         
-ingress-nginx/ingress-nginx                     4.10.1          1.10.1      
+4. Create a values file (`nginx-values.yaml`) to override default variables. Refer to the [Nginx Ingress Controller documentation](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/) for available options.
 
-- to override some default variables 
-- create the nginx-values
-- all options on the nginx website
-   ```bash 
-   helm install my-ing ingress-nginx/ingress-nginx \
-   --namespace ingress \
-   --version 4.10.1 \
-   -f nginx-values.yaml \
-   --create-namespace
+5. Install the Ingress-Nginx Helm chart:
 
+    ```bash
+    helm install my-ing ingress-nginx/ingress-nginx \
+    --namespace ingress \
+    --version 4.10.1 \
+    -f nginx-values.yaml \
+    --create-namespace
+    ```
 
-NAME: my-ing
-LAST DEPLOYED: Sat May 11 02:21:32 2024
-NAMESPACE: ingress
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-The ingress-nginx controller has been installed.
-It may take a few minutes for the load balancer IP to be available.
-You can watch the status by running 'kubectl get service --namespace ingress my-ing-ingress-nginx-controller --output wide --watch'
+6. Verify the installation:
 
-An example Ingress that makes use of the controller:
-  apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    name: example
-    namespace: foo
-  spec:
-    ingressClassName: external-nginx
-    rules:
-      - host: www.example.com
-        http:
-          paths:
-            - pathType: Prefix
-              backend:
-                service:
-                  name: exampleService
-                  port:
-                    number: 80
-              path: /
-    # This section is only required if TLS is to be enabled for the Ingress
-    tls:
-      - hosts:
-        - www.example.com
-        secretName: example-tls
+    ```bash
+    kubectl get pods -n ingress
+    kubectl get svc -n ingress
+    ```
 
-If TLS is enabled for the Ingress, a Secret containing the certificate and key must also be provided:
+## Configuring Ingress
 
-  apiVersion: v1
-  kind: Secret
-  metadata:
-    name: example-tls
-    namespace: foo
-  data:
-    tls.crt: <base64 encoded cert>
-    tls.key: <base64 encoded key>
-  type: kubernetes.io/tls
+1. Create Ingress resources to define how external traffic should be routed to your Kubernetes services. Here's an example:
 
+    ```yaml
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: example
+      namespace: foo
+    spec:
+      ingressClassName: external-nginx
+      rules:
+        - host: www.example.com
+          http:
+            paths:
+              - pathType: Prefix
+                backend:
+                  service:
+                    name: exampleService
+                    port:
+                      number: 80
+                path: /
+      tls:
+        - hosts:
+          - www.example.com
+          secretName: example-tls
+    ```
 
-  kubectl get pods -n ingress
+2. Apply the Ingress resource to the cluster:
 
-  kubectl get svc -n ingress
-NAME                                        TYPE           CLUSTER-IP    EXTERNAL-IP    PORT(S)                      AGE
-my-ing-ingress-nginx-controller             LoadBalancer   10.22.5.53    34.78.22.124   80:32502/TCP,443:31998/TCP   4m31s
-my-ing-ingress-nginx-controller-admission   ClusterIP      10.22.4.252   <none>         443/TCP                      4m31s
-my-ing-ingress-nginx-controller-metrics     ClusterIP      10.22.8.156   <none>         10254/TCP                    4m31s
+    ```bash
+    kubectl apply -f ingress.yaml
+    ```
 
-create third yaml file
-kube3.yaml
+3. Verify the Ingress setup:
 
-kubectl apply -f kube3.yaml
+    ```bash
+    kubectl get ingressclass
+    kubectl get ingress
+    ```
 
-verify if you set up ingress correctly
+## DNS Configuration
 
-kubectl get ingressclass
+1. Create a DNS A record in your DNS provider pointing to the external IP address of the Nginx Ingress Controller service.
 
-kubectl get ing
+## Conclusion
 
-kubectl get svc -n ingress
-
-the final step to this ingress work , is to create DNS A record in your dns provider
-
+By following these steps, you've successfully deployed and configured an Nginx Ingress Controller on your Kubernetes cluster. This allows you to manage external access to your Kubernetes services efficiently.
